@@ -1,0 +1,16 @@
+version: '3.8'
+name: realtime-leader-board
+services:
+  redis:
+    image: redis:latest                # Redis official image from Docker Hub
+    environment:
+      - SPRING_REDIS_HOST=redis        # Redis service name in Docker Compose as hostname
+      - SPRING_REDIS_PORT=6379
+    container_name: redis
+    ports:
+      - "6379:6379"                    # Maps container port 6379 to host port 6379
+    volumes:
+      - redis_data:/data               # Persist Redis data
+volumes:
+  redis_data:
+    driver: local

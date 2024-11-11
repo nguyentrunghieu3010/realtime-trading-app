@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Leaderboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* Align items vertically */
+            min-height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 20px; /* Space below the heading */
+        }
+
+        /* Leaderboard container styling */
+        #leaderboard-container {
+            width: 90%;
+            max-width: 600px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px; /* Add space above the container */
+        }
+
+        /* Scrollable table container */
+        .scrollable-table {
+            max-height: 400px; /* Adjust this to control the max height */
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Participant item styling */
+        .participant-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .participant-score {
+            color: red; /* Set the score color to red */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h2>Leaderboard</h2>
+
+<div id="leaderboard-container">
+    <div class="scrollable-table">
+        <table id="leaderboard">
+            <thead>
+            <tr>
+                <th>Participant Name</th>
+                <th>Score</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+    let stompClient = null;
+
+    function connect() {
+        const socket = new SockJS('/leaderboard-websocket');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            // Subscribe to the public topic for leaderboard updates
+            stompClient.subscribe('/topic/leaderboard', function (message) {
+                showLeaderboard(JSON.parse(message.body));
+            });
+        });
+    }
+
+    function showLeaderboard(leaderboard) {
+        const leaderboardBody = document.querySelector("#leaderboard tbody");
+        leaderboardBody.innerHTML = ''; // Clear previous content
+        leaderboard.participants.forEach(participant => {
+            const row = document.createElement("tr");
+            const nameCell = document.createElement("td");
+            nameCell.className = "participant-name";
+            nameCell.textContent = participant.name;
+
+            const scoreCell = document.createElement("td");
+            scoreCell.className = "participant-score";
+            scoreCell.textContent = participant.score;
+
+            row.appendChild(nameCell);
+            row.appendChild(scoreCell);
+            leaderboardBody.appendChild(row);
+        });
+    }
+
+    // Connect to WebSocket when page loads
+    connect();
+</script>
+</body>
+</html>
